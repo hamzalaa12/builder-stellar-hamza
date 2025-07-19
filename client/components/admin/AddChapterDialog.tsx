@@ -22,16 +22,28 @@ interface AddChapterDialogProps {
   onClose: () => void;
 }
 
-// Mock manga data for search
+// Mock manga data for search - expanded list with Arabic names
 const mockMangaList = [
   { id: "1", title: "Advance Dragon King to resist all" },
-  { id: "2", title: "One Piece" },
-  { id: "3", title: "Naruto" },
-  { id: "4", title: "Attack on Titan" },
-  { id: "5", title: "Demon Slayer" },
-  { id: "6", title: "Dragon Ball Super" },
-  { id: "7", title: "My Hero Academia" },
-  { id: "8", title: "Jujutsu Kaisen" },
+  { id: "2", title: "أحمد الشجاع" },
+  { id: "3", title: "أقوى محارب" },
+  { id: "4", title: "بطل النار" },
+  { id: "5", title: "تنين السماء" },
+  { id: "6", title: "جندي الظلام" },
+  { id: "7", title: "حارس الأرض" },
+  { id: "8", title: "خالد المحارب" },
+  { id: "9", title: "ذئب الليل" },
+  { id: "10", title: "راكب التنين" },
+  { id: "11", title: "زعيم القبائل" },
+  { id: "12", title: "سيف العدالة" },
+  { id: "13", title: "شعلة الأمل" },
+  { id: "14", title: "صائد الشياطين" },
+  { id: "15", title: "ضوء القمر" },
+  { id: "16", title: "طائر الفينيق" },
+  { id: "17", title: "ظل الموت" },
+  { id: "18", title: "عاصفة الرعد" },
+  { id: "19", title: "غابة السحر" },
+  { id: "20", title: "فارس الحق" },
 ];
 
 export default function AddChapterDialog({
@@ -51,13 +63,13 @@ export default function AddChapterDialog({
   const [showMangaDropdown, setShowMangaDropdown] = useState(false);
   const [filteredManga, setFilteredManga] = useState(mockMangaList);
 
-  // Filter manga based on search (show results after 2+ characters)
+  // Filter manga based on search (show results after 1+ characters)
   useEffect(() => {
-    if (mangaSearch.length >= 2) {
+    if (mangaSearch.length >= 1) {
       const filtered = mockMangaList.filter((manga) =>
         manga.title.toLowerCase().includes(mangaSearch.toLowerCase()),
       );
-      setFilteredManga(filtered);
+      setFilteredManga(filtered.slice(0, 10)); // Limit to 10 results
       setShowMangaDropdown(true);
     } else {
       setShowMangaDropdown(false);
