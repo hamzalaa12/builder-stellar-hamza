@@ -35,58 +35,63 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 space-x-reverse">
-            <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              مانجافاس
-            </span>
+            <span className="font-bold text-2xl text-primary">mangafas</span>
           </Link>
 
           {/* Navigation */}
-          <nav className="mx-6 flex items-center space-x-4 space-x-reverse lg:space-x-6 lg:space-x-reverse">
-            <Link to="/">
-              <Button
-                variant={isActive("/") ? "default" : "ghost"}
-                className="text-sm font-medium"
-              >
-                الرئيسية
-              </Button>
+          <nav className="mx-8 flex items-center space-x-6 space-x-reverse">
+            <Link
+              to="/"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/") ? "text-primary" : "text-foreground/80"
+              }`}
+            >
+              الرئيسية
             </Link>
-            <Link to="/manga">
-              <Button
-                variant={isActive("/manga") ? "default" : "ghost"}
-                className="text-sm font-medium"
-              >
-                المانجا
-              </Button>
+            <Link
+              to="/manga"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/manga") ? "text-primary" : "text-foreground/80"
+              }`}
+            >
+              مانجا
             </Link>
-            <Link to="/manhwa">
-              <Button
-                variant={isActive("/manhwa") ? "default" : "ghost"}
-                className="text-sm font-medium"
-              >
-                المانهوا
-              </Button>
+            <Link
+              to="/manhwa"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/manhwa") ? "text-primary" : "text-foreground/80"
+              }`}
+            >
+              مانهوا
             </Link>
-            <Link to="/manhua">
-              <Button
-                variant={isActive("/manhua") ? "default" : "ghost"}
-                className="text-sm font-medium"
-              >
-                المانها
-              </Button>
+            <Link
+              to="/manhua"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/manhua") ? "text-primary" : "text-foreground/80"
+              }`}
+            >
+              مانها
             </Link>
           </nav>
 
-          <div className="mr-auto flex items-center space-x-2 space-x-reverse">
+          <div className="mr-auto flex items-center space-x-3 space-x-reverse">
             {/* Search */}
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="ابحث عن مانجا..."
+                className="w-64 h-9 pr-10 pl-3 bg-card border border-border rounded-md text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+
+            {/* User icon */}
             <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
+              <User className="h-5 w-5" />
             </Button>
 
             {/* Notifications */}
