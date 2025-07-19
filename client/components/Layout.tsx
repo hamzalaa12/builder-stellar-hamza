@@ -20,7 +20,7 @@ import {
   History,
 } from "lucide-react";
 import { ReactNode } from "react";
-import { useAuth, roleLabels } from "@/context/AuthContext";
+import { useAuth, roleLabels, rolePermissions } from "@/context/AuthContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -161,6 +161,14 @@ export default function Layout({ children }: LayoutProps) {
                       الإعدادات
                     </Link>
                   </DropdownMenuItem>
+                  {user && rolePermissions[user.role]?.canAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        لوحة الإدارة
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600" onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
