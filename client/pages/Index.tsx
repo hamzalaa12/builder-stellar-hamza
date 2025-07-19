@@ -120,48 +120,45 @@ export default function Index() {
                 الأكثر شعبية
               </Button>
             </div>
-
-            {/* Admin Quick Actions */}
-            {isAdmin && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mt-8">
-                <Dialog open={isAddMangaOpen} onOpenChange={setIsAddMangaOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="lg"
-                      className="px-6 py-3 bg-primary hover:bg-primary/90 flex items-center gap-2"
-                    >
-                      <BookOpen className="w-5 h-5" />
-                      إضافة مانجا
-                    </Button>
-                  </DialogTrigger>
-                  <AddMangaDialog
-                    isOpen={isAddMangaOpen}
-                    onClose={() => setIsAddMangaOpen(false)}
-                  />
-                </Dialog>
-
-                <Dialog
-                  open={isAddChapterOpen}
-                  onOpenChange={setIsAddChapterOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button
-                      size="lg"
-                      className="px-6 py-3 bg-primary hover:bg-primary/90 flex items-center gap-2"
-                    >
-                      <FileText className="w-5 h-5" />
-                      إضافة فصل
-                    </Button>
-                  </DialogTrigger>
-                  <AddChapterDialog
-                    isOpen={isAddChapterOpen}
-                    onClose={() => setIsAddChapterOpen(false)}
-                  />
-                </Dialog>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* Floating Admin Action Buttons */}
+        {isAdmin && (
+          <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
+            <Dialog open={isAddMangaOpen} onOpenChange={setIsAddMangaOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center"
+                  title="إضافة مانجا"
+                >
+                  <BookOpen className="w-6 h-6" />
+                </Button>
+              </DialogTrigger>
+              <AddMangaDialog
+                isOpen={isAddMangaOpen}
+                onClose={() => setIsAddMangaOpen(false)}
+              />
+            </Dialog>
+
+            <Dialog open={isAddChapterOpen} onOpenChange={setIsAddChapterOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="rounded-full w-16 h-16 bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center"
+                  title="إضافة فصل"
+                >
+                  <FileText className="w-6 h-6" />
+                </Button>
+              </DialogTrigger>
+              <AddChapterDialog
+                isOpen={isAddChapterOpen}
+                onClose={() => setIsAddChapterOpen(false)}
+              />
+            </Dialog>
+          </div>
+        )}
 
         {/* Latest Chapters Section */}
         <div className="container mx-auto px-6 py-12">
