@@ -16,16 +16,22 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Search, ChevronDown } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { addManga, searchCategories, MANGA_CATEGORIES } from "@/lib/mangaData";
 
 interface AddMangaDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export default function AddMangaDialog({
   isOpen,
   onClose,
+  onSuccess,
 }: AddMangaDialogProps) {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -39,25 +45,18 @@ export default function AddMangaDialog({
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [genreSearch, setGenreSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
-  const availableGenres = [
-    "أكشن",
-    "مغا��رة",
-    "كوميديا",
-    "دراما",
-    "فانتازيا",
-    "رومانسي",
-    "خيال علمي",
-    "رعب",
-    "غموض",
-    "رياضة",
-    "نفسي",
-    "إثارة",
-  ];
-
-  const filteredGenres = availableGenres.filter(
-    (genre) => genre.includes(genreSearch) && !selectedGenres.includes(genre),
-  );
+  const filteredGenres = genreSearch
+    ? searchCategories(genreSearch).filter(
+        (genre) => !selectedGenres.includes(genre),
+      )
+    : showAllCategories
+      ? MANGA_CATEGORIES.filter((genre) => !selectedGenres.includes(genre))
+      : MANGA_CATEGORIES.slice(0, 20).filter(
+          (genre) => !selectedGenres.includes(genre),
+        );
 
   const handleAddGenre = (genre: string) => {
     if (!selectedGenres.includes(genre)) {
@@ -70,11 +69,53 @@ export default function AddMangaDialog({
     setSelectedGenres(selectedGenres.filter((g) => g !== genre));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("New manga data:", { ...formData, genres: selectedGenres });
-    onClose();
+    if (!user) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const mangaData = {
+        title: formData.title,
+        description: formData.description,
+        coverUrl: formData.coverUrl,
+        author: formData.author,
+        artist: formData.artist,
+        year: parseInt(formData.year),
+        status: formData.status as "ongoing" | "completed" | "hiatus",
+        type: formData.type as "manga" | "manhwa" | "manhua",
+        genres: selectedGenres,
+        rating: 0,
+        lastUpdate: "اليوم",
+        createdBy: user.id,
+      };
+
+      const newManga = addManga(mangaData);
+      console.log("تمت إضافة مانجا جديدة:", newManga);
+
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        coverUrl: "",
+        author: "",
+        artist: "",
+        year: "2025",
+        status: "ongoing",
+        type: "manga",
+      });
+      setSelectedGenres([]);
+      setGenreSearch("");
+      setShowAllCategories(false);
+
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (error) {
+      console.error("خطأ في إضافة المانجا:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (
@@ -237,19 +278,46 @@ export default function AddMangaDialog({
           </div>
 
           {/* Genre suggestions */}
-          {genreSearch && filteredGenres.length > 0 && (
-            <div className="border rounded-md p-2 bg-card max-h-32 overflow-y-auto">
-              {filteredGenres.slice(0, 5).map((genre) => (
-                <button
-                  key={genre}
-                  type="button"
-                  onClick={() => handleAddGenre(genre)}
-                  className="block w-full text-right px-2 py-1 hover:bg-muted rounded text-sm"
-                >
-                  {genre}
-                </button>
-              ))}
+          {(genreSearch || showAllCategories) && filteredGenres.length > 0 && (
+            <div className="border rounded-md p-2 bg-card max-h-48 overflow-y-auto">
+              <div className="flex justify-between items-center mb-2 text-xs text-muted-foreground">
+                <span>
+                  {filteredGenres.length} من {MANGA_CATEGORIES.length} تصنيف
+                </span>
+                {!genreSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    className="text-primary hover:underline"
+                  >
+                    {showAllCategories ? "إخفاء" : "عرض الكل"}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1">
+                {filteredGenres.map((genre) => (
+                  <button
+                    key={genre}
+                    type="button"
+                    onClick={() => handleAddGenre(genre)}
+                    className="text-right px-2 py-1 hover:bg-muted rounded text-sm border border-border/50 hover:border-primary/50 transition-colors"
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Show all categories button */}
+          {!genreSearch && !showAllCategories && (
+            <button
+              type="button"
+              onClick={() => setShowAllCategories(true)}
+              className="w-full p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded border border-dashed border-border transition-colors"
+            >
+              عرض جميع التصنيفات ({MANGA_CATEGORIES.length} تصنيف)
+            </button>
           )}
 
           {/* Selected genres */}
@@ -285,9 +353,10 @@ export default function AddMangaDialog({
         {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-primary hover:bg-primary/90 py-3 text-lg"
+          disabled={isSubmitting || !formData.title.trim()}
+          className="w-full bg-primary hover:bg-primary/90 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          إضافة المانجا
+          {isSubmitting ? "جارً الإضافة..." : "إضافة المانجا"}
         </Button>
       </form>
     </DialogContent>
