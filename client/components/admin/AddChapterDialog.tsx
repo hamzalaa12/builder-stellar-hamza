@@ -103,25 +103,25 @@ export default function AddChapterDialog({
         <DialogTitle className="text-xl">إضافة فصل جديد</DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Manga Selection */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-foreground">
             اختر المانجا <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="اختر مانجا/مانهوا/مانه��..."
+              placeholder="اختر مانجا/مانهوا/مانها"
               value={mangaSearch}
               onChange={(e) => setMangaSearch(e.target.value)}
-              className="pr-10"
+              className="pr-10 bg-card border-border"
               required
             />
 
             {/* Manga Dropdown */}
             {showMangaDropdown && filteredManga.length > 0 && (
-              <div className="absolute top-full left-0 right-0 z-50 border rounded-md bg-card shadow-lg max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 z-50 border border-border rounded-md bg-card shadow-lg max-h-48 overflow-y-auto">
                 {filteredManga.map((manga) => (
                   <button
                     key={manga.id}
@@ -138,9 +138,9 @@ export default function AddChapterDialog({
         </div>
 
         {/* Chapter Number and Title */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-foreground">
               رقم الفصل <span className="text-red-500">*</span>
             </label>
             <Input
@@ -148,40 +148,47 @@ export default function AddChapterDialog({
               placeholder="10"
               value={formData.chapterNumber}
               onChange={handleInputChange}
+              className="bg-card border-border"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">عنوان الفصل</label>
+            <label className="text-sm font-medium text-foreground">
+              عنوان الفصل
+            </label>
             <Input
               name="chapterTitle"
               placeholder="عنوان الفصل (اختياري)"
               value={formData.chapterTitle}
               onChange={handleInputChange}
+              className="bg-card border-border"
             />
           </div>
         </div>
 
         {/* Chapter Description */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">وصف الفصل</label>
+          <label className="text-sm font-medium text-foreground">
+            وصف الفصل
+          </label>
           <Textarea
             name="description"
             placeholder="وصف مختصر للفصل (اختياري)"
             value={formData.description}
             onChange={handleInputChange}
+            className="bg-card border-border"
             rows={3}
           />
         </div>
 
         {/* Chapter Pages Upload */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-foreground">
             صور الفصل <span className="text-red-500">*</span>
           </label>
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-            <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground mb-2">
+          <div className="border-2 border-dashed border-border rounded-lg p-8 text-center bg-card/50">
+            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground mb-3">
               اختر صور الفصل أو اسحبها هنا
             </p>
             <input
@@ -196,43 +203,53 @@ export default function AddChapterDialog({
               type="button"
               variant="outline"
               onClick={() => document.getElementById("chapter-pages")?.click()}
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >
               رفع الصفحات
             </Button>
           </div>
 
           {formData.pages.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.pages.map((file, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  <FileText className="h-3 w-3 mr-1" />
-                  الصفحة {index + 1}
-                </Badge>
-              ))}
+            <div className="mt-4">
+              <div className="text-sm font-medium text-foreground mb-2">
+                تم رفع {formData.pages.length} صفحة
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.pages.map((file, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    <FileText className="h-3 w-3 mr-1" />
+                    الصفحة {index + 1}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Advanced Settings */}
-        <details className="border rounded-lg p-3">
-          <summary className="cursor-pointer font-medium text-sm">
-            إعدادات متقدمة
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <input type="checkbox" id="featured" />
-              <label htmlFor="featured">فصل مميز</label>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <input type="checkbox" id="notify" />
-              <label htmlFor="notify">إرسال إشعار للمتابعين</label>
-            </div>
+        {/* Page Info */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
+            <span className="text-sm font-medium text-foreground">
+              الصفحة 1
+            </span>
+            <Button variant="outline" size="sm">
+              رفع ملف
+            </Button>
           </div>
-        </details>
+          <div className="text-center">
+            <span className="text-sm text-muted-foreground">رابطة صفحة 1</span>
+          </div>
+          <div className="text-center text-sm text-muted-foreground">
+            يمكنك إضافة من علامة تبويب أو استخدام رابطة خارجية
+          </div>
+        </div>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full">
-          رفع جميع الصفحات
+        <Button
+          type="submit"
+          className="w-full bg-primary hover:bg-primary/90 py-3 text-lg"
+        >
+          إضافة الفصل
         </Button>
       </form>
     </DialogContent>
