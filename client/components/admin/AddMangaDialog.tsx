@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Search } from "lucide-react";
+import { X, Plus, Search, ChevronDown } from "lucide-react";
 
 interface AddMangaDialogProps {
   isOpen: boolean;
@@ -42,7 +42,7 @@ export default function AddMangaDialog({
 
   const availableGenres = [
     "أكشن",
-    "مغامرة",
+    "مغا��رة",
     "كوميديا",
     "دراما",
     "فانتازيا",
@@ -94,31 +94,32 @@ export default function AddMangaDialog({
         </DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title and Type */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-foreground">
               العنوان <span className="text-red-500">*</span>
             </label>
             <Input
               name="title"
-              placeholder="اختر المانجا"
+              placeholder="اختر العنوان"
               value={formData.title}
               onChange={handleInputChange}
+              className="bg-card border-border"
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">النوع</label>
+            <label className="text-sm font-medium text-foreground">النوع</label>
             <Select
               value={formData.type}
               onValueChange={(value) =>
                 setFormData((prev) => ({ ...prev, type: value }))
               }
             >
-              <SelectTrigger>
-                <SelectValue />
+              <SelectTrigger className="bg-card border-border">
+                <SelectValue placeholder="اختر النوع" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="manga">مانجا</SelectItem>
@@ -131,70 +132,85 @@ export default function AddMangaDialog({
 
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">الوصف</label>
+          <label className="text-sm font-medium text-foreground">الوصف</label>
           <Textarea
             name="description"
             placeholder="وصف المانجا..."
             value={formData.description}
             onChange={handleInputChange}
+            className="bg-card border-border min-h-[100px]"
             rows={4}
           />
         </div>
 
         {/* Cover Image URL */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">رابط صورة الغلاف</label>
+          <label className="text-sm font-medium text-foreground">
+            رابط صورة الغلاف
+          </label>
           <Input
             name="coverUrl"
             placeholder="https://example.com/cover.jpg"
             value={formData.coverUrl}
             onChange={handleInputChange}
+            className="bg-card border-border"
           />
         </div>
 
         {/* Author and Artist */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">المؤلف</label>
+            <label className="text-sm font-medium text-foreground">
+              المؤلف
+            </label>
             <Input
               name="author"
               placeholder="اسم المؤلف"
               value={formData.author}
               onChange={handleInputChange}
+              className="bg-card border-border"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">الرسام</label>
+            <label className="text-sm font-medium text-foreground">
+              الرسام
+            </label>
             <Input
               name="artist"
               placeholder="اسم الرسام"
               value={formData.artist}
               onChange={handleInputChange}
+              className="bg-card border-border"
             />
           </div>
         </div>
 
         {/* Year and Status */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">سنة الإصدار</label>
+            <label className="text-sm font-medium text-foreground">
+              سنة الإصدار
+            </label>
             <Input
               name="year"
               type="number"
               value={formData.year}
               onChange={handleInputChange}
+              className="bg-card border-border"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">الحالة</label>
+            <label className="text-sm font-medium text-foreground">
+              الحالة
+            </label>
             <Select
               value={formData.status}
               onValueChange={(value) =>
                 setFormData((prev) => ({ ...prev, status: value }))
               }
             >
-              <SelectTrigger>
-                <SelectValue />
+              <SelectTrigger className="bg-card border-border">
+                <SelectValue placeholder="اختر الحالة" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ongoing">مستمر</SelectItem>
@@ -207,14 +223,16 @@ export default function AddMangaDialog({
 
         {/* Genres */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">التصنيفات</label>
+          <label className="text-sm font-medium text-foreground">
+            التصنيفات
+          </label>
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="ابحث عن تصنيف..."
               value={genreSearch}
               onChange={(e) => setGenreSearch(e.target.value)}
-              className="pr-10"
+              className="pr-10 bg-card border-border"
             />
           </div>
 
@@ -252,11 +270,12 @@ export default function AddMangaDialog({
         </div>
 
         {/* Advanced Options Dropdown */}
-        <details className="border rounded-lg p-3">
-          <summary className="cursor-pointer font-medium text-sm">
+        <details className="border border-border rounded-lg p-4 bg-card/50">
+          <summary className="cursor-pointer font-medium text-sm text-foreground flex items-center gap-2">
+            <ChevronDown className="h-4 w-4" />
             إعدادات متقدمة من القائمة المنسدلة
           </summary>
-          <div className="mt-3 space-y-3">
+          <div className="mt-4 space-y-3">
             <div className="text-sm text-muted-foreground">
               يمكن إضافة المزيد من الخيارات المتقدمة هنا
             </div>
@@ -264,7 +283,10 @@ export default function AddMangaDialog({
         </details>
 
         {/* Submit Button */}
-        <Button type="submit" className="w-full">
+        <Button
+          type="submit"
+          className="w-full bg-primary hover:bg-primary/90 py-3 text-lg"
+        >
           إضافة المانجا
         </Button>
       </form>
