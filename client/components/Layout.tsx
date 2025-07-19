@@ -20,6 +20,7 @@ import {
   History,
 } from "lucide-react";
 import { ReactNode } from "react";
+import { useAuth, roleLabels } from "@/context/AuthContext";
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,24 +28,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-
-  // Mock user data - in real app this would come from auth context
-  const user = {
-    name: "مستخدم",
-    email: "user@example.com",
-    avatar: "",
-    role: "user" as const,
-    notifications: 3,
-  };
-
-  const roleLabels = {
-    user: "مستخدم",
-    beginner_fighter: "🥉 مقاتل مبتدئ",
-    elite_fighter: "🥈 مقاتل نخبة",
-    tribe_leader: "🥇 قائد القبيلة",
-    admin: "🛡️ مدير",
-    site_admin: "👑 مدير الموقع",
-  };
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -78,7 +62,7 @@ export default function Layout({ children }: LayoutProps) {
                 variant={isActive("/manga") ? "default" : "ghost"}
                 className="text-sm font-medium"
               >
-                المانجا
+                المانج��
               </Button>
             </Link>
             <Link to="/manhwa">
@@ -138,9 +122,11 @@ export default function Layout({ children }: LayoutProps) {
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
-                  <Badge variant="secondary" className="w-fit text-xs mt-1">
-                    {roleLabels[user.role]}
-                  </Badge>
+                  {user && (
+                    <Badge variant="secondary" className="w-fit text-xs mt-1">
+                      {roleLabels[user.role]}
+                    </Badge>
+                  )}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -168,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   تسجيل الخروج
                 </DropdownMenuItem>
