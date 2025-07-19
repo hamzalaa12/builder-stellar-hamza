@@ -188,30 +188,122 @@ export default function Layout({ children }: LayoutProps) {
       <main className="container mx-auto py-6">{children}</main>
 
       {/* Footer */}
-      <footer className="border-t bg-background">
-        <div className="container flex h-16 items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            © 2024 مانجافاس. جميع الحقوق محفوظة.
-          </p>
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <Link
-              to="/about"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              حول الموقع
-            </Link>
-            <Link
-              to="/contact"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              اتصل بنا
-            </Link>
-            <Link
-              to="/privacy"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
-              سياسة الخصوصية
-            </Link>
+      <footer className="border-t border-border/40 bg-card">
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* About Section */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <BookOpen className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold text-primary">
+                  مانجا بلس
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                منصتك المفضلة لقراءة المانجا والمانهوا والمانها المترجمة بجودة
+                عالية وتجربة مميزة
+              </p>
+              <p className="text-xs text-muted-foreground">
+                جميع حقوق النشر محفوظة لأصحابها - هذا الموقع لا يخزن أي ملفات
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">
+                روابط سريعة
+              </h3>
+              <div className="space-y-2">
+                <Link
+                  to="/"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  الرئيسية
+                </Link>
+                <Link
+                  to="/manga"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  مانجا يابانية
+                </Link>
+                <Link
+                  to="/manhwa"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  مانهوا كورية
+                </Link>
+                <Link
+                  to="/manhua"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  مانها صينية
+                </Link>
+                <Link
+                  to="/about"
+                  className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  حول الموقع
+                </Link>
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">التصنيفات</h3>
+              <div className="space-y-2">
+                <span className="block text-sm text-muted-foreground">
+                  أكشن
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  مغامرة
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  كوميديا
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  دراما
+                </span>
+                <span className="block text-sm text-muted-foreground">
+                  فانتازيا
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Info */}
+          <div className="border-t border-border/40 mt-8 pt-6">
+            <h3 className="font-semibold text-foreground mb-3">تواصل معنا</h3>
+            <div className="flex flex-col space-y-2 text-sm text-muted-foreground">
+              <span>hamza232324ya@gmail.com</span>
+              <span>رقم هاتف: 24/7</span>
+            </div>
+          </div>
+
+          {/* Bottom Copyright */}
+          <div className="border-t border-border/40 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-xs text-muted-foreground mb-4 md:mb-0">
+              © 2024 مانجا بلس. جميع الحقوق محفوظة.
+            </p>
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <Link
+                to="/privacy"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                الخصوصية
+              </Link>
+              <Link
+                to="/contact"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                اتصل بنا
+              </Link>
+              <Link
+                to="/about"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                من نحن
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
