@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Search, ChevronDown } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, rolePermissions } from "@/context/AuthContext";
 import { addManga, searchCategories, MANGA_CATEGORIES } from "@/lib/mangaData";
+import { addPendingContent, addNotification } from "@/lib/userData";
 
 interface AddMangaDialogProps {
   isOpen: boolean;
@@ -69,7 +70,7 @@ export default function AddMangaDialog({
     setSelectedGenres(selectedGenres.filter((g) => g !== genre));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -91,8 +92,38 @@ export default function AddMangaDialog({
         createdBy: user.id,
       };
 
-      const newManga = addManga(mangaData);
-      console.log("تمت إضافة مانجا جديدة:", newManga);
+      // Check if user needs approval
+      const needsApproval = ["beginner_fighter", "elite_fighter"].includes(user.role);
+
+      if (needsApproval) {
+        // Add to pending content for approval
+        const pendingContent = addPendingContent("manga", mangaData, user.id);
+
+        // Notify admins about pending content
+        // Note: In a real app, you'd get all admin users from the database
+        addNotification(
+          "admin-1", // Default admin ID
+          "content_pending_approval",
+          "محتوى في انتظار الموافقة",
+          `${user.name} رفع مانجا جديدة: ${mangaData.title}`,
+          { contentId: pendingContent.id, type: "manga" }
+        );
+
+        // Notify user about submission
+        addNotification(
+          user.id,
+          "content_pending_approval",
+          "تم رفع المانجا",
+          `تم رفع المانجا بنجاح وهي الآن في انتظار موافقة المدير",
+          { contentId: pendingContent.id }
+        );
+
+        console.log("تم رفع المانجا للمراجعة:", pendingContent);
+      } else {
+        // Direct upload for higher roles
+        const newManga = addManga(mangaData);
+        console.log("تمت إضافة مانجا جديدة:", newManga);
+      }
 
       // Reset form
       setFormData({
@@ -351,13 +382,23 @@ export default function AddMangaDialog({
         </details>
 
         {/* Submit Button */}
-        <Button
+                <Button
           type="submit"
           disabled={isSubmitting || !formData.title.trim()}
           className="w-full bg-primary hover:bg-primary/90 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "جارً الإضافة..." : "إضافة المانجا"}
+          {isSubmitting
+            ? "جارً الإضافة..."
+            : user && ["beginner_fighter", "elite_fighter"].includes(user.role)
+              ? "رفع للمراجعة"
+              : "إضافة المانجا"}
         </Button>
+
+        {user && ["beginner_fighter", "elite_fighter"].includes(user.role) && (
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            سيتم مراجعة المانجا من قبل المدير قبل نشرها
+          </p>
+        )}
       </form>
     </DialogContent>
   );
