@@ -3,7 +3,25 @@ import Layout from "@/components/Layout";
 import ChapterCard from "@/components/ChapterCard";
 import Pagination from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
-import { Flame, TrendingUp, Clock, Star } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Flame,
+  TrendingUp,
+  Clock,
+  Star,
+  Plus,
+  BookOpen,
+  FileText,
+} from "lucide-react";
+import { useAuth, rolePermissions } from "@/context/AuthContext";
+import AddMangaDialog from "@/components/admin/AddMangaDialog";
+import AddChapterDialog from "@/components/admin/AddChapterDialog";
 
 // Mock data for latest chapters
 const generateMockChapters = (page: number) => {
@@ -32,9 +50,15 @@ export default function Index() {
   const [filter, setFilter] = useState<
     "latest" | "popular" | "trending" | "rated"
   >("latest");
+  const [isAddMangaOpen, setIsAddMangaOpen] = useState(false);
+  const [isAddChapterOpen, setIsAddChapterOpen] = useState(false);
   const totalPages = 10; // Mock total pages
+  const { user } = useAuth();
 
   const chapters = generateMockChapters(currentPage);
+
+  // Check if user is site admin
+  const isAdmin = user && rolePermissions[user.role]?.canAdmin;
 
   const filterLabels = {
     latest: "الأحدث",
@@ -96,6 +120,46 @@ export default function Index() {
                 الأكثر شعبية
               </Button>
             </div>
+
+            {/* Admin Quick Actions */}
+            {isAdmin && (
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mt-8">
+                <Dialog open={isAddMangaOpen} onOpenChange={setIsAddMangaOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      size="lg"
+                      className="px-6 py-3 bg-primary hover:bg-primary/90 flex items-center gap-2"
+                    >
+                      <BookOpen className="w-5 h-5" />
+                      إضافة مانجا
+                    </Button>
+                  </DialogTrigger>
+                  <AddMangaDialog
+                    isOpen={isAddMangaOpen}
+                    onClose={() => setIsAddMangaOpen(false)}
+                  />
+                </Dialog>
+
+                <Dialog
+                  open={isAddChapterOpen}
+                  onOpenChange={setIsAddChapterOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      size="lg"
+                      className="px-6 py-3 bg-primary hover:bg-primary/90 flex items-center gap-2"
+                    >
+                      <FileText className="w-5 h-5" />
+                      إضافة فصل
+                    </Button>
+                  </DialogTrigger>
+                  <AddChapterDialog
+                    isOpen={isAddChapterOpen}
+                    onClose={() => setIsAddChapterOpen(false)}
+                  />
+                </Dialog>
+              </div>
+            )}
           </div>
         </div>
 
