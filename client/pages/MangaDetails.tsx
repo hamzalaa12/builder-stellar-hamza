@@ -22,6 +22,7 @@ import {
   type Manga,
   type Chapter,
 } from "@/lib/mangaData";
+import CommentSystem from "@/components/CommentSystem";
 import {
   isMangaFavorited,
   addToFavorites,
@@ -236,7 +237,7 @@ export default function MangaDetails() {
                     {lastReadChapter && (
                       <div className="text-sm text-muted-foreground text-center flex items-center justify-center gap-1">
                         <Clock className="h-4 w-4" />
-                        ��خر قراءة: الفصل {lastReadChapter}
+                        آخر قراءة: الفصل {lastReadChapter}
                       </div>
                     )}
                   </div>
@@ -409,6 +410,13 @@ export default function MangaDetails() {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Comments Section */}
+            <Card>
+              <CardContent className="p-6">
+                <CommentSystem mangaId={manga.id} title={manga.title} />
               </CardContent>
             </Card>
           </div>
