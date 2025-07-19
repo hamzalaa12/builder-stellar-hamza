@@ -54,6 +54,7 @@ const generateMockManga = (
       ] as any,
       lastUpdate: `منذ ${Math.floor(Math.random() * 30)} يوم`,
       genres: genres.slice(0, Math.floor(Math.random() * 4) + 2),
+      views: Math.floor(Math.random() * 100000) + 5000,
       type,
     });
   }
