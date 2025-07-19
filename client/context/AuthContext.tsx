@@ -89,11 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize on mount
   useEffect(() => {
     initializeUsers();
-    // Note: We don't auto-login users, they need to explicitly login
-    // const currentUser = getCurrentUser();
-    // if (currentUser) {
-    //   setUser(currentUser);
-    // }
+    // Restore user session on page reload
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+    }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
