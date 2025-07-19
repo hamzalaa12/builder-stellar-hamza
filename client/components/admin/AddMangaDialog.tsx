@@ -70,7 +70,7 @@ export default function AddMangaDialog({
     setSelectedGenres(selectedGenres.filter((g) => g !== genre));
   };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
@@ -93,7 +93,9 @@ export default function AddMangaDialog({
       };
 
       // Check if user needs approval
-      const needsApproval = ["beginner_fighter", "elite_fighter"].includes(user.role);
+      const needsApproval = ["beginner_fighter", "elite_fighter"].includes(
+        user.role,
+      );
 
       if (needsApproval) {
         // Add to pending content for approval
@@ -106,7 +108,7 @@ export default function AddMangaDialog({
           "content_pending_approval",
           "محتوى في انتظار الموافقة",
           `${user.name} رفع مانجا جديدة: ${mangaData.title}`,
-          { contentId: pendingContent.id, type: "manga" }
+          { contentId: pendingContent.id, type: "manga" },
         );
 
         // Notify user about submission
@@ -114,8 +116,8 @@ export default function AddMangaDialog({
           user.id,
           "content_pending_approval",
           "تم رفع المانجا",
-          `تم رفع المانجا بنجاح وهي الآن في انتظار موافقة المدير",
-          { contentId: pendingContent.id }
+          `تم رفع المانجا بنجاح وهي الآن في انتظار موافقة المدير`,
+          { contentId: pendingContent.id },
         );
 
         console.log("تم رفع المانجا للمراجعة:", pendingContent);
@@ -191,7 +193,7 @@ export default function AddMangaDialog({
               }
             >
               <SelectTrigger className="bg-card border-border">
-                <SelectValue placeholder="اختر النوع" />
+                <SelectValue placeholder="ا��تر النوع" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="manga">مانجا</SelectItem>
@@ -382,7 +384,7 @@ export default function AddMangaDialog({
         </details>
 
         {/* Submit Button */}
-                <Button
+        <Button
           type="submit"
           disabled={isSubmitting || !formData.title.trim()}
           className="w-full bg-primary hover:bg-primary/90 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
