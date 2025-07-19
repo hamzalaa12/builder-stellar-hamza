@@ -6,6 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MangaList from "./pages/MangaList";
@@ -19,84 +20,86 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/manga" element={<MangaList type="manga" />} />
-          <Route path="/manhwa" element={<MangaList type="manhwa" />} />
-          <Route path="/manhua" element={<MangaList type="manhua" />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/manga" element={<MangaList type="manga" />} />
+            <Route path="/manhwa" element={<MangaList type="manhwa" />} />
+            <Route path="/manhua" element={<MangaList type="manhua" />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
 
-          {/* Placeholder routes for future development */}
-          <Route
-            path="/manga/:id"
-            element={
-              <PlaceholderPage
-                title="صفحة المانجا"
-                description="هذه الصفحة قيد التطوير. ستتمكن قريباً من عرض تفاصيل المانجا وقراءة الفصول."
-                suggestions={[
-                  "عرض معلومات المانجا",
-                  "قراءة الفصول",
-                  "إضافة تعليقات",
-                  "إضافة للمفضلة",
-                ]}
-              />
-            }
-          />
-          <Route
-            path="/chapter/:id"
-            element={
-              <PlaceholderPage
-                title="قارئ الفصول"
-                description="هذه الصفحة قيد التطوير. ستتمكن قريباً من قراءة فصول المانجا بتجربة مميزة."
-                suggestions={[
-                  "قراءة الفصل",
-                  "التنقل بين الصفحات",
-                  "إعدادات القراءة",
-                  "إضافة تعليقات",
-                ]}
-              />
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <PlaceholderPage
-                title="حول الموقع"
-                description="تعرف على مانجافاس - وجهتك المفضلة لقراءة المانجا والمانهوا والمانها."
-              />
-            }
-          />
-          <Route
-            path="/contact"
-            element={
-              <PlaceholderPage
-                title="اتصل بنا"
-                description="نحن هنا لمساعدتك! تواصل معنا لأي استفسارات أو مقترحات."
-              />
-            }
-          />
-          <Route
-            path="/privacy"
-            element={
-              <PlaceholderPage
-                title="سياسة الخصوصية"
-                description="تعرف على كيفية حماية خصوصيتك وبياناتك في مانجافاس."
-              />
-            }
-          />
+            {/* Placeholder routes for future development */}
+            <Route
+              path="/manga/:id"
+              element={
+                <PlaceholderPage
+                  title="صفحة المانجا"
+                  description="هذه الصفحة قيد التطوير. ستتمكن قريباً من عرض تفاصيل المانجا وقراءة الفصول."
+                  suggestions={[
+                    "عرض معلومات المانجا",
+                    "قراءة الفصول",
+                    "إضا��ة تعليقات",
+                    "إضافة للمفضلة",
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="/chapter/:id"
+              element={
+                <PlaceholderPage
+                  title="قارئ الفصول"
+                  description="هذه الصفحة قيد التطوير. ستتمكن قريباً من قراءة فصول المانجا بتجربة مميزة."
+                  suggestions={[
+                    "قراءة الفصل",
+                    "التنقل بين الصفحات",
+                    "إعدادات القراءة",
+                    "إضافة تعليقات",
+                  ]}
+                />
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <PlaceholderPage
+                  title="حول الموقع"
+                  description="تعرف على مانجافاس - وجهتك المفضلة لقراءة المانجا والمانهوا والمانها."
+                />
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <PlaceholderPage
+                  title="اتصل بنا"
+                  description="نحن هنا لمساعدتك! تواصل معنا لأي استفسارات أو مقترحات."
+                />
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <PlaceholderPage
+                  title="سياسة الخصوصية"
+                  description="تعرف على كيفية حماية خصوصيتك وبياناتك في مانجافاس."
+                />
+              }
+            />
 
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
