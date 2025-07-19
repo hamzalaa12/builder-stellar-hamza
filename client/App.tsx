@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MangaList from "./pages/MangaList";
+import MangaDetails from "./pages/MangaDetails";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
@@ -35,22 +36,8 @@ const App = () => (
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
 
-            {/* Placeholder routes for future development */}
-            <Route
-              path="/manga/:id"
-              element={
-                <PlaceholderPage
-                  title="صفحة المانجا"
-                  description="هذه الصفحة قيد التطوير. ستتمكن قريباً من عرض تفاصيل المانجا وقراءة الفصول."
-                  suggestions={[
-                    "عرض معلومات المانجا",
-                    "قراءة الفصول",
-                    "إضا��ة تعليقات",
-                    "إضافة للمفضلة",
-                  ]}
-                />
-              }
-            />
+            {/* Manga Details */}
+            <Route path="/manga/:id" element={<MangaDetails />} />
             <Route
               path="/chapter/:id"
               element={
@@ -80,7 +67,7 @@ const App = () => (
               element={
                 <PlaceholderPage
                   title="اتصل بنا"
-                  description="نحن هنا لمساعدتك! تواصل معنا لأي استفسارات أو مقترحات."
+                  description="نحن هنا لمساعدتك! تواصل ��عنا لأي استفسارات أو مقترحات."
                 />
               }
             />
