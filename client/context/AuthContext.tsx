@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export type UserRole =
   | "user"
@@ -30,7 +36,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock default admin user as specified in requirements
+// Real user storage in localStorage
+const USERS_STORAGE_KEY = "mangafas_users";
+const CURRENT_USER_KEY = "mangafas_current_user";
+
+// Default admin user as specified in requirements
 const DEFAULT_ADMIN: User = {
   id: "admin-1",
   name: "حمزة",
@@ -41,35 +51,89 @@ const DEFAULT_ADMIN: User = {
   notifications: 0,
 };
 
+// Initialize default users if not exists
+const initializeUsers = () => {
+  const existingUsers = localStorage.getItem(USERS_STORAGE_KEY);
+  if (!existingUsers) {
+    const defaultUsers = [DEFAULT_ADMIN];
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
+  }
+};
+
+const getStoredUsers = (): User[] => {
+  const users = localStorage.getItem(USERS_STORAGE_KEY);
+  return users ? JSON.parse(users) : [];
+};
+
+const saveUsers = (users: User[]) => {
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+};
+
+const getCurrentUser = (): User | null => {
+  const userStr = localStorage.getItem(CURRENT_USER_KEY);
+  return userStr ? JSON.parse(userStr) : null;
+};
+
+const saveCurrentUser = (user: User | null) => {
+  if (user) {
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(DEFAULT_ADMIN); // Start with admin logged in for demo
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize on mount
+  useEffect(() => {
+    initializeUsers();
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(currentUser);
+    }
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
-    // Mock authentication logic
-    // In real app, this would be an API call
+    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    const users = getStoredUsers();
+    const foundUser = users.find((u) => u.email === email);
+
+    // Check admin credentials
     if (email === "hamza232324ya@gmail.com" && password === "hamza2009") {
-      setUser(DEFAULT_ADMIN);
+      const adminUser = {
+        ...DEFAULT_ADMIN,
+        lastLogin: new Date().toISOString(),
+      };
+
+      // Update admin in storage
+      const updatedUsers = users.filter((u) => u.id !== DEFAULT_ADMIN.id);
+      updatedUsers.push(adminUser);
+      saveUsers(updatedUsers);
+
+      setUser(adminUser);
+      saveCurrentUser(adminUser);
       setIsLoading(false);
       return true;
     }
 
-    // Mock other users for demo
-    if (email.includes("@")) {
-      const mockUser: User = {
-        id: "user-" + Date.now(),
-        name: "مستخدم تجريبي",
-        email,
-        role: "user",
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        notifications: 3,
-      };
-      setUser(mockUser);
+    // For now, just check if user exists (in real app, you'd hash and compare passwords)
+    if (foundUser) {
+      const updatedUser = { ...foundUser, lastLogin: new Date().toISOString() };
+
+      // Update user's last login
+      const updatedUsers = users.map((u) =>
+        u.id === foundUser.id ? updatedUser : u,
+      );
+      saveUsers(updatedUsers);
+
+      setUser(updatedUser);
+      saveCurrentUser(updatedUser);
       setIsLoading(false);
       return true;
     }
@@ -80,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    saveCurrentUser(null);
   };
 
   const register = async (
@@ -89,11 +154,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<boolean> => {
     setIsLoading(true);
 
-    // Mock registration logic
+    // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    const users = getStoredUsers();
+
+    // Check if user already exists
+    if (users.find((u) => u.email === email)) {
+      setIsLoading(false);
+      return false;
+    }
+
     const newUser: User = {
-      id: "user-" + Date.now(),
+      id: "user-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9),
       name,
       email,
       role: "user",
@@ -102,14 +175,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       notifications: 0,
     };
 
+    // Save new user to storage
+    const updatedUsers = [...users, newUser];
+    saveUsers(updatedUsers);
+
     setUser(newUser);
+    saveCurrentUser(newUser);
     setIsLoading(false);
     return true;
   };
 
   const updateUser = (updates: Partial<User>) => {
     if (user) {
-      setUser({ ...user, ...updates });
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      saveCurrentUser(updatedUser);
+
+      // Update in users storage
+      const users = getStoredUsers();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id ? updatedUser : u,
+      );
+      saveUsers(updatedUsers);
     }
   };
 
