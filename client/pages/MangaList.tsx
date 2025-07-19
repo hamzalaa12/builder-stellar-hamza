@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import MangaCard from "@/components/MangaCard";
 import Pagination from "@/components/Pagination";
@@ -28,6 +28,7 @@ interface MangaListProps {
 }
 
 export default function MangaList({ type }: MangaListProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("latest");
@@ -41,7 +42,15 @@ export default function MangaList({ type }: MangaListProps) {
   useEffect(() => {
     initializeMangaStorage();
     loadMangaData();
-  }, [type]);
+
+    // Set category filter from URL parameter
+    const categoryParam = searchParams.get("category");
+    if (categoryParam && MANGA_CATEGORIES.includes(categoryParam)) {
+      setCategoryFilter(categoryParam);
+    } else {
+      setCategoryFilter("all");
+    }
+  }, [type, searchParams]);
 
   useEffect(() => {
     filterAndSortManga();
@@ -123,7 +132,7 @@ export default function MangaList({ type }: MangaListProps) {
 
   const categoryOptions = [
     { value: "all", label: "جميع التصنيفات" },
-    ...MANGA_CATEGORIES.slice(0, 20).map((category) => ({
+    ...MANGA_CATEGORIES.map((category) => ({
       value: category,
       label: category,
     })),
