@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import MangaCard from "@/components/MangaCard";
 import Pagination from "@/components/Pagination";
@@ -84,7 +85,7 @@ export default function MangaList({ type }: MangaListProps) {
   ];
 
   const statusOptions = [
-    { value: "all", label: "جميع الحالات" },
+    { value: "all", label: "جميع الحا��ات" },
     { value: "ongoing", label: "مستمر" },
     { value: "completed", label: "مكتمل" },
     { value: "hiatus", label: "متوقف" },
