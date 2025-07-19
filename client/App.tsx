@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MangaList from "./pages/MangaList";
 import MangaDetails from "./pages/MangaDetails";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import History from "./pages/History";
@@ -31,6 +33,8 @@ const App = () => (
             <Route path="/manga" element={<MangaList type="manga" />} />
             <Route path="/manhwa" element={<MangaList type="manhwa" />} />
             <Route path="/manhua" element={<MangaList type="manhua" />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/history" element={<History />} />
@@ -67,7 +71,7 @@ const App = () => (
               element={
                 <PlaceholderPage
                   title="اتصل بنا"
-                  description="نحن هنا لمساعدتك! تواصل ��عنا لأي استفسارات أو مقترحات."
+                  description="نحن هنا لمساعدتك! تواصل معنا لأي استفسارات أو مقترحات."
                 />
               }
             />
