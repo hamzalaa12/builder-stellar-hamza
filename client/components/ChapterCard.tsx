@@ -26,43 +26,57 @@ export default function ChapterCard({
   rating,
   isNew = false,
 }: ChapterCardProps) {
+  const statusOptions = ["مكتمل", "جديد", "مستمر"];
+  const randomStatus =
+    statusOptions[Math.floor(Math.random() * statusOptions.length)];
+
   return (
     <Link to={`/chapter/${id}`}>
-      <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer">
-        <div className="relative aspect-[3/4] overflow-hidden">
+      <div className="group overflow-hidden transition-all duration-300 hover:scale-105 cursor-pointer">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
           <img
             src={coverImage}
             alt={title}
             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          {/* Badges */}
+          {/* Top Badges */}
           <div className="absolute top-2 right-2 flex flex-col gap-1">
-            {isNew && (
-              <Badge className="bg-red-500 hover:bg-red-600 text-white">
-                جديد
-              </Badge>
-            )}
-            <Badge variant="secondary" className="bg-black/50 text-white">
+            <Badge
+              className={`text-xs px-2 py-1 ${
+                randomStatus === "مكتمل"
+                  ? "bg-blue-500 hover:bg-blue-600"
+                  : randomStatus === "جديد"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-green-500 hover:bg-green-600"
+              } text-white`}
+            >
+              {randomStatus}
+            </Badge>
+          </div>
+
+          {/* Chapter Number Badge */}
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-primary/90 hover:bg-primary text-white text-xs px-2 py-1">
               الفصل {chapterNumber}
             </Badge>
           </div>
 
           {/* Rating */}
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-1">
+          <div className="absolute bottom-12 left-2 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
             <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-xs text-white">{rating}</span>
+            <span className="text-xs text-white font-medium">{rating}</span>
           </div>
 
-          {/* Bottom overlay with info */}
+          {/* Bottom Info */}
           <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-            <h3 className="font-bold text-sm mb-1 line-clamp-2">
+            <h3 className="font-bold text-sm mb-1 line-clamp-1">
               {mangaTitle}
             </h3>
-            <p className="text-xs text-gray-200 mb-2 line-clamp-1">{title}</p>
+            <p className="text-xs text-gray-300 mb-2 line-clamp-1">{title}</p>
 
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs text-gray-400">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>{timeAgo}</span>
@@ -74,7 +88,7 @@ export default function ChapterCard({
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }
