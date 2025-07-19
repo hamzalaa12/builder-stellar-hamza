@@ -181,7 +181,7 @@ export default function AddChapterDialog({
                         : "لا توجد مانجا متوفرة"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      يرجى إضافة مانجا أولاً قبل إضافة الفصول
+                      ��رجى إضافة مانجا أولاً قبل إضافة الفصول
                     </p>
                   </div>
                 ) : (
@@ -329,8 +329,18 @@ export default function AddChapterDialog({
           disabled={isSubmitting || !selectedManga || !formData.title.trim()}
           className="w-full bg-primary hover:bg-primary/90 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "جارٍ الإضافة..." : "إضافة الفصل"}
+          {isSubmitting
+            ? "جارٍ الإضافة..."
+            : user && ["beginner_fighter", "elite_fighter"].includes(user.role)
+              ? "رفع للمراجعة"
+              : "إضافة الفصل"}
         </Button>
+
+        {user && ["beginner_fighter", "elite_fighter"].includes(user.role) && (
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            سيتم مراجعة الفصل من قبل المدير قبل نشره
+          </p>
+        )}
       </form>
     </DialogContent>
   );
