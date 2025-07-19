@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -18,7 +17,702 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from \"@/components/ui/alert-dialog\";\nimport {\n  Users,\n  Shield,\n  Ban,\n  UserCheck,\n  Search,\n  Trash2,\n  Crown,\n  TrendingUp,\n  Clock,\n  User,\n  MessageSquare,\n  BookOpen,\n  Heart,\n  History,\n  Settings,\n  AlertTriangle,\n} from \"lucide-react\";\nimport {\n  useAuth,\n  roleLabels,\n  rolePermissions,\n  UserRole,\n} from \"@/context/AuthContext\";\nimport {\n  getAllUsers,\n  updateUserRole,\n  banUser,\n  unbanUser,\n  isUserBanned,\n  getBannedUsers,\n  deleteUser,\n  getUserStats,\n  searchUsers,\n  getUsersByRole,\n  notifyAdminsNewUser,\n  type BannedUser,\n} from \"@/lib/userManagement\";\nimport {\n  getPendingCommentReports,\n  getCommentsByUser,\n  banUserFromCommenting,\n  isUserBannedFromCommenting,\n  getCommentStats,\n} from \"@/lib/commentSystem\";\nimport { getUserProfile } from \"@/lib/userData\";\n\nexport default function UserManagement() {\n  const { user } = useAuth();\n  const [activeTab, setActiveTab] = useState(\"overview\");\n  const [users, setUsers] = useState<any[]>([]);\n  const [searchQuery, setSearchQuery] = useState(\"\");\n  const [selectedRole, setSelectedRole] = useState<string>(\"all\");\n  const [selectedUser, setSelectedUser] = useState<any>(null);\n  const [isManageUserOpen, setIsManageUserOpen] = useState(false);\n  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);\n  const [userToDelete, setUserToDelete] = useState<any>(null);\n  const [commentStats, setCommentStats] = useState<any>({});\n  const [bannedUsers, setBannedUsers] = useState<BannedUser[]>([]);\n\n  useEffect(() => {\n    loadUserData();\n  }, []);\n\n  const loadUserData = () => {\n    // Load users with comprehensive stats\n    const allUsers = getAllUsers();\n    const usersWithStats = allUsers.map((u) => {\n      const stats = getUserStats(u.id);\n      const profile = getUserProfile(u.id);\n      const banned = isUserBanned(u.id);\n      const commentBanned = isUserBannedFromCommenting(u.id);\n      const userComments = getCommentsByUser(u.id);\n      \n      return {\n        ...u,\n        stats: stats?.stats || {},\n        profile: stats?.profile || profile,\n        favoritesCount: stats?.favoritesCount || 0,\n        readingHistoryCount: stats?.readingHistoryCount || 0,\n        commentsCount: userComments.length,\n        activeCommentsCount: userComments.filter(c => c.status === \"active\").length,\n        isBanned: !!banned,\n        banInfo: banned,\n        isCommentBanned: commentBanned,\n        lastActive: profile?.lastActive || u.lastLogin,\n        joinedDaysAgo: Math.floor(\n          (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24)\n        ),\n      };\n    });\n    setUsers(usersWithStats);\n\n    // Load comment statistics\n    setCommentStats(getCommentStats());\n\n    // Load banned users\n    setBannedUsers(getBannedUsers().filter(b => b.isActive));\n  };\n\n  const handleRoleChange = (userId: string, newRole: UserRole) => {\n    if (!user) return;\n    if (updateUserRole(userId, newRole, user.id)) {\n      loadUserData();\n    }\n  };\n\n  const handleBanUser = (\n    userId: string,\n    reason: string,\n    duration: \"temporary\" | \"permanent\",\n    days?: number,\n  ) => {\n    if (!user) return;\n    if (banUser(userId, user.id, reason, duration, days)) {\n      loadUserData();\n    }\n  };\n\n  const handleUnbanUser = (userId: string) => {\n    if (!user) return;\n    if (unbanUser(userId, user.id)) {\n      loadUserData();\n    }\n  };\n\n  const handleDeleteUser = (userToDelete: any) => {\n    if (!user) return;\n    if (deleteUser(userToDelete.id, user.id)) {\n      loadUserData();\n      setIsDeleteDialogOpen(false);\n      setUserToDelete(null);\n    }\n  };\n\n  const handleBanFromCommenting = (\n    userId: string,\n    reason: string,\n    duration: \"temporary\" | \"permanent\",\n    days?: number,\n  ) => {\n    if (!user) return;\n    if (banUserFromCommenting(userId, user.id, reason, duration, days)) {\n      loadUserData();\n    }\n  };\n\n  const getFilteredUsers = () => {\n    let filtered = users;\n\n    if (searchQuery) {\n      filtered = searchUsers(searchQuery).map((u) => {\n        const fullUser = users.find((user) => user.id === u.id);\n        return fullUser || u;\n      });\n    }\n\n    if (selectedRole !== \"all\") {\n      filtered = filtered.filter((u) => u.role === selectedRole);\n    }\n\n    return filtered;\n  };\n\n  const UserDetailModal = ({ user: targetUser }: { user: any }) => {\n    const [banReason, setBanReason] = useState(\"\");\n    const [banDuration, setBanDuration] = useState<\"temporary\" | \"permanent\">(\n      \"temporary\",\n    );\n    const [banDays, setBanDays] = useState(7);\n    const [commentBanReason, setCommentBanReason] = useState(\"\");\n    const [action, setAction] = useState<\"view\" | \"ban\" | \"role\" | \"commentBan\">(\n      \"view\",\n    );\n\n    return (\n      <Dialog open={isManageUserOpen} onOpenChange={setIsManageUserOpen}>\n        <DialogContent className=\"max-w-2xl max-h-[90vh] overflow-y-auto\">\n          <DialogHeader>\n            <DialogTitle className=\"flex items-center gap-3\">\n              <Avatar className=\"h-8 w-8\">\n                <AvatarImage src={targetUser?.profile?.avatar} />\n                <AvatarFallback>\n                  <User className=\"h-4 w-4\" />\n                </AvatarFallback>\n              </Avatar>\n              إدارة المستخدم: {targetUser?.name}\n            </DialogTitle>\n          </DialogHeader>\n\n          <Tabs value={action} onValueChange={(value: any) => setAction(value)}>\n            <TabsList className=\"grid w-full grid-cols-4\">\n              <TabsTrigger value=\"view\">المعلومات</TabsTrigger>\n              <TabsTrigger value=\"role\">الرتبة</TabsTrigger>\n              <TabsTrigger value=\"ban\">الحظر</TabsTrigger>\n              <TabsTrigger value=\"commentBan\">حظر التعليقات</TabsTrigger>\n            </TabsList>\n\n            <TabsContent value=\"view\" className=\"space-y-4 mt-4\">\n              <div className=\"grid grid-cols-2 gap-4\">\n                <Card>\n                  <CardContent className=\"p-4\">\n                    <div className=\"text-center\">\n                      <div className=\"text-2xl font-bold text-primary\">\n                        {targetUser?.commentsCount || 0}\n                      </div>\n                      <div className=\"text-sm text-muted-foreground\">\n                        إجمالي التعليقات\n                      </div>\n                    </div>\n                  </CardContent>\n                </Card>\n                \n                <Card>\n                  <CardContent className=\"p-4\">\n                    <div className=\"text-center\">\n                      <div className=\"text-2xl font-bold text-primary\">\n                        {targetUser?.stats?.chaptersRead || 0}\n                      </div>\n                      <div className=\"text-sm text-muted-foreground\">\n                        فصول مقروءة\n                      </div>\n                    </div>\n                  </CardContent>\n                </Card>\n                \n                <Card>\n                  <CardContent className=\"p-4\">\n                    <div className=\"text-center\">\n                      <div className=\"text-2xl font-bold text-primary\">\n                        {targetUser?.favoritesCount || 0}\n                      </div>\n                      <div className=\"text-sm text-muted-foreground\">\n                        مفضلة\n                      </div>\n                    </div>\n                  </CardContent>\n                </Card>\n                \n                <Card>\n                  <CardContent className=\"p-4\">\n                    <div className=\"text-center\">\n                      <div className=\"text-2xl font-bold text-primary\">\n                        {targetUser?.joinedDaysAgo}\n                      </div>\n                      <div className=\"text-sm text-muted-foreground\">\n                        يوم عضوية\n                      </div>\n                    </div>\n                  </CardContent>\n                </Card>\n              </div>\n              \n              <div className=\"space-y-2\">\n                <div className=\"flex justify-between\">\n                  <span className=\"text-sm font-medium\">البريد الإلكتروني:</span>\n                  <span className=\"text-sm text-muted-foreground\">\n                    {targetUser?.email}\n                  </span>\n                </div>\n                <div className=\"flex justify-between\">\n                  <span className=\"text-sm font-medium\">تاريخ الانضمام:</span>\n                  <span className=\"text-sm text-muted-foreground\">\n                    {new Date(targetUser?.createdAt || \"\").toLocaleDateString(\"ar\")}\n                  </span>\n                </div>\n                <div className=\"flex justify-between\">\n                  <span className=\"text-sm font-medium\">آخر نشاط:</span>\n                  <span className=\"text-sm text-muted-foreground\">\n                    {new Date(targetUser?.lastActive || \"\").toLocaleDateString(\"ar\")}\n                  </span>\n                </div>\n                <div className=\"flex justify-between\">\n                  <span className=\"text-sm font-medium\">الرتبة الحالية:</span>\n                  <Badge variant=\"secondary\">\n                    {roleLabels[targetUser?.role as UserRole]}\n                  </Badge>\n                </div>\n                {targetUser?.isBanned && (\n                  <div className=\"flex justify-between\">\n                    <span className=\"text-sm font-medium\">حالة الحظر:</span>\n                    <Badge variant=\"destructive\">محظور</Badge>\n                  </div>\n                )}\n                {targetUser?.isCommentBanned && (\n                  <div className=\"flex justify-between\">\n                    <span className=\"text-sm font-medium\">حظر التعليقات:</span>\n                    <Badge variant=\"destructive\">محظور من التعليق</Badge>\n                  </div>\n                )}\n              </div>\n            </TabsContent>\n\n            <TabsContent value=\"role\" className=\"space-y-4 mt-4\">\n              <div>\n                <Label>تغيير الرتبة</Label>\n                <Select\n                  value={targetUser?.role}\n                  onValueChange={(value) =>\n                    handleRoleChange(targetUser?.id, value as UserRole)\n                  }\n                >\n                  <SelectTrigger>\n                    <SelectValue />\n                  </SelectTrigger>\n                  <SelectContent>\n                    {Object.entries(roleLabels).map(([role, label]) => (\n                      <SelectItem key={role} value={role}>\n                        {label}\n                      </SelectItem>\n                    ))}\n                  </SelectContent>\n                </Select>\n              </div>\n              \n              <div className=\"p-4 bg-muted/50 rounded-lg\">\n                <h4 className=\"font-medium mb-2\">صلاحيات الرتبة الحالية:</h4>\n                <div className=\"space-y-1 text-sm text-muted-foreground\">\n                  {targetUser?.role && rolePermissions[targetUser.role] && (\n                    <>\n                      <div>• {rolePermissions[targetUser.role].canRead ? \"يمكن القراءة\" : \"لا يمكن القراءة\"}</div>\n                      <div>• {rolePermissions[targetUser.role].canComment ? \"يمكن التعليق\" : \"لا يمكن التعليق\"}</div>\n                      <div>• {rolePermissions[targetUser.role].canUpload ? \"يمكن الرفع\" : \"لا يمكن الرفع\"}</div>\n                      <div>• {rolePermissions[targetUser.role].canModerate ? \"يمكن الإشراف\" : \"لا يمكن الإشراف\"}</div>\n                      <div>• {rolePermissions[targetUser.role].canAdmin ? \"يمكن الإدارة\" : \"لا يمكن الإدارة\"}</div>\n                    </>\n                  )}\n                </div>\n              </div>\n            </TabsContent>\n\n            <TabsContent value=\"ban\" className=\"space-y-4 mt-4\">\n              {targetUser?.isBanned ? (\n                <div className=\"space-y-4\">\n                  <div className=\"p-4 bg-destructive/10 border border-destructive/20 rounded-lg\">\n                    <h4 className=\"font-medium text-destructive mb-2\">المستخدم محظور</h4>\n                    <div className=\"text-sm space-y-1\">\n                      <div>السبب: {targetUser.banInfo?.reason}</div>\n                      <div>النوع: {targetUser.banInfo?.duration === \"permanent\" ? \"دائم\" : \"مؤقت\"}</div>\n                      {targetUser.banInfo?.expiresAt && (\n                        <div>ينتهي: {new Date(targetUser.banInfo.expiresAt).toLocaleDateString(\"ar\")}</div>\n                      )}\n                    </div>\n                  </div>\n                  <Button\n                    onClick={() => handleUnbanUser(targetUser.id)}\n                    className=\"w-full\"\n                    variant=\"outline\"\n                  >\n                    <UserCheck className=\"h-4 w-4 ml-2\" />\n                    رفع الحظر\n                  </Button>\n                </div>\n              ) : (\n                <div className=\"space-y-3\">\n                  <div>\n                    <Label>سبب الحظر</Label>\n                    <Input\n                      placeholder=\"سبب الحظر\"\n                      value={banReason}\n                      onChange={(e) => setBanReason(e.target.value)}\n                    />\n                  </div>\n                  <div>\n                    <Label>نوع الحظر</Label>\n                    <Select\n                      value={banDuration}\n                      onValueChange={(value: any) => setBanDuration(value)}\n                    >\n                      <SelectTrigger>\n                        <SelectValue />\n                      </SelectTrigger>\n                      <SelectContent>\n                        <SelectItem value=\"temporary\">مؤقت</SelectItem>\n                        <SelectItem value=\"permanent\">دائم</SelectItem>\n                      </SelectContent>\n                    </Select>\n                  </div>\n                  {banDuration === \"temporary\" && (\n                    <div>\n                      <Label>عدد الأيام</Label>\n                      <Input\n                        type=\"number\"\n                        placeholder=\"عدد الأيام\"\n                        value={banDays}\n                        onChange={(e) => setBanDays(parseInt(e.target.value) || 7)}\n                      />\n                    </div>\n                  )}\n                  <Button\n                    onClick={() =>\n                      handleBanUser(\n                        targetUser.id,\n                        banReason,\n                        banDuration,\n                        banDays,\n                      )\n                    }\n                    className=\"w-full\"\n                    variant=\"destructive\"\n                    disabled={!banReason.trim()}\n                  >\n                    <Ban className=\"h-4 w-4 ml-2\" />\n                    حظر المستخدم\n                  </Button>\n                </div>\n              )}\n            </TabsContent>\n\n            <TabsContent value=\"commentBan\" className=\"space-y-4 mt-4\">\n              {targetUser?.isCommentBanned ? (\n                <div className=\"p-4 bg-destructive/10 border border-destructive/20 rounded-lg\">\n                  <h4 className=\"font-medium text-destructive mb-2\">محظور من التعليقات</h4>\n                  <p className=\"text-sm text-muted-foreground\">هذا المستخدم لا يمكنه كتابة التعليقات</p>\n                </div>\n              ) : (\n                <div className=\"space-y-3\">\n                  <div>\n                    <Label>سبب حظر التعليقات</Label>\n                    <Input\n                      placeholder=\"سبب منع التعليقات\"\n                      value={commentBanReason}\n                      onChange={(e) => setCommentBanReason(e.target.value)}\n                    />\n                  </div>\n                  <Button\n                    onClick={() =>\n                      handleBanFromCommenting(\n                        targetUser.id,\n                        commentBanReason,\n                        \"permanent\",\n                      )\n                    }\n                    className=\"w-full\"\n                    variant=\"destructive\"\n                    disabled={!commentBanReason.trim()}\n                  >\n                    <MessageSquare className=\"h-4 w-4 ml-2\" />\n                    حظر من التعليقات\n                  </Button>\n                </div>\n              )}\n            </TabsContent>\n          </Tabs>\n        </DialogContent>\n      </Dialog>\n    );\n  };\n\n  const filteredUsers = getFilteredUsers();\n  const activeUsers = users.filter(u => !u.isBanned).length;\n  const bannedUsersCount = users.filter(u => u.isBanned).length;\n  const moderators = users.filter(u => [\"admin\", \"site_admin\", \"elite_fighter\", \"tribe_leader\"].includes(u.role)).length;\n\n  return (\n    <div className=\"space-y-6\">\n      {/* Statistics Cards */}\n      <div className=\"grid grid-cols-1 md:grid-cols-4 gap-6\">\n        <Card>\n          <CardContent className=\"p-6\">\n            <div className=\"flex items-center gap-3\">\n              <Users className=\"h-8 w-8 text-blue-500\" />\n              <div>\n                <p className=\"text-2xl font-bold\">{users.length}</p>\n                <p className=\"text-sm text-muted-foreground\">إجمالي المستخدمين</p>\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n\n        <Card>\n          <CardContent className=\"p-6\">\n            <div className=\"flex items-center gap-3\">\n              <UserCheck className=\"h-8 w-8 text-green-500\" />\n              <div>\n                <p className=\"text-2xl font-bold\">{activeUsers}</p>\n                <p className=\"text-sm text-muted-foreground\">مستخدمون نشطون</p>\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n\n        <Card>\n          <CardContent className=\"p-6\">\n            <div className=\"flex items-center gap-3\">\n              <Shield className=\"h-8 w-8 text-orange-500\" />\n              <div>\n                <p className=\"text-2xl font-bold\">{moderators}</p>\n                <p className=\"text-sm text-muted-foreground\">مشرفون ومديرون</p>\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n\n        <Card>\n          <CardContent className=\"p-6\">\n            <div className=\"flex items-center gap-3\">\n              <Ban className=\"h-8 w-8 text-red-500\" />\n              <div>\n                <p className=\"text-2xl font-bold\">{bannedUsersCount}</p>\n                <p className=\"text-sm text-muted-foreground\">محظورون</p>\n              </div>\n            </div>\n          </CardContent>\n        </Card>\n      </div>\n\n      {/* Search and Filters */}\n      <Card>\n        <CardHeader>\n          <CardTitle>إدارة المستخدمين</CardTitle>\n          <div className=\"flex gap-3\">\n            <div className=\"relative flex-1 max-w-sm\">\n              <Search className=\"absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground\" />\n              <Input\n                placeholder=\"ابحث في المستخدمين...\"\n                value={searchQuery}\n                onChange={(e) => setSearchQuery(e.target.value)}\n                className=\"pr-10\"\n              />\n            </div>\n            <Select value={selectedRole} onValueChange={setSelectedRole}>\n              <SelectTrigger className=\"w-[200px]\">\n                <SelectValue />\n              </SelectTrigger>\n              <SelectContent>\n                <SelectItem value=\"all\">جميع الرتب</SelectItem>\n                {Object.entries(roleLabels).map(([role, label]) => (\n                  <SelectItem key={role} value={role}>\n                    {label}\n                  </SelectItem>\n                ))}\n              </SelectContent>\n            </Select>\n          </div>\n        </CardHeader>\n        <CardContent>\n          <div className=\"space-y-4\">\n            {filteredUsers.map((u) => (\n              <div\n                key={u.id}\n                className={`p-4 border rounded-lg transition-colors ${\n                  u.isBanned ? \"bg-red-50 border-red-200\" : \"hover:bg-muted/50\"\n                }`}\n              >\n                <div className=\"flex items-center justify-between\">\n                  <div className=\"flex items-center gap-3\">\n                    <Avatar className=\"h-10 w-10\">\n                      <AvatarImage src={u.profile?.avatar} />\n                      <AvatarFallback>\n                        <User className=\"h-5 w-5\" />\n                      </AvatarFallback>\n                    </Avatar>\n                    <div>\n                      <div className=\"flex items-center gap-2\">\n                        <h4 className=\"font-medium\">{u.name}</h4>\n                        <Badge variant=\"secondary\">\n                          {roleLabels[u.role]}\n                        </Badge>\n                        {u.isBanned && (\n                          <Badge variant=\"destructive\">محظور</Badge>\n                        )}\n                        {u.isCommentBanned && (\n                          <Badge variant=\"outline\" className=\"text-red-500\">\n                            حظر تعليقات\n                          </Badge>\n                        )}\n                      </div>\n                      <p className=\"text-sm text-muted-foreground\">{u.email}</p>\n                      <div className=\"flex items-center gap-4 text-xs text-muted-foreground mt-1\">\n                        <span className=\"flex items-center gap-1\">\n                          <MessageSquare className=\"h-3 w-3\" />\n                          {u.commentsCount} تعليق\n                        </span>\n                        <span className=\"flex items-center gap-1\">\n                          <BookOpen className=\"h-3 w-3\" />\n                          {u.stats?.chaptersRead || 0} فصل\n                        </span>\n                        <span className=\"flex items-center gap-1\">\n                          <Heart className=\"h-3 w-3\" />\n                          {u.favoritesCount} مفضل\n                        </span>\n                        <span className=\"flex items-center gap-1\">\n                          <Clock className=\"h-3 w-3\" />\n                          {u.joinedDaysAgo} يوم عضوية\n                        </span>\n                      </div>\n                    </div>\n                  </div>\n\n                  <div className=\"flex items-center gap-2\">\n                    <Button\n                      size=\"sm\"\n                      variant=\"outline\"\n                      onClick={() => {\n                        setSelectedUser(u);\n                        setIsManageUserOpen(true);\n                      }}\n                    >\n                      <Settings className=\"h-4 w-4 ml-1\" />\n                      إدارة\n                    </Button>\n                    \n                    <AlertDialog\n                      open={isDeleteDialogOpen && userToDelete?.id === u.id}\n                      onOpenChange={(open) => {\n                        setIsDeleteDialogOpen(open);\n                        if (!open) setUserToDelete(null);\n                      }}\n                    >\n                      <AlertDialogTrigger asChild>\n                        <Button\n                          size=\"sm\"\n                          variant=\"destructive\"\n                          onClick={() => setUserToDelete(u)}\n                          disabled={u.role === \"site_admin\"}\n                        >\n                          <Trash2 className=\"h-4 w-4\" />\n                        </Button>\n                      </AlertDialogTrigger>\n                      <AlertDialogContent>\n                        <AlertDialogHeader>\n                          <AlertDialogTitle>حذف المستخدم</AlertDialogTitle>\n                          <AlertDialogDescription>\n                            هل أنت متأكد من حذف المستخدم {userToDelete?.name}؟ هذا الإجراء لا يمكن التراجع عنه.\n                          </AlertDialogDescription>\n                        </AlertDialogHeader>\n                        <AlertDialogFooter>\n                          <AlertDialogCancel>إلغاء</AlertDialogCancel>\n                          <AlertDialogAction\n                            onClick={() => handleDeleteUser(userToDelete)}\n                            className=\"bg-destructive text-destructive-foreground hover:bg-destructive/90\"\n                          >\n                            حذف\n                          </AlertDialogAction>\n                        </AlertDialogFooter>\n                      </AlertDialogContent>\n                    </AlertDialog>\n                  </div>\n                </div>\n              </div>\n            ))}\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* User Detail Modal */}\n      {selectedUser && <UserDetailModal user={selectedUser} />}\n    </div>\n  );\n}\n
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Users,
+  Shield,
+  Ban,
+  UserCheck,
+  Search,
+  Trash2,
+  Clock,
+  User,
+  MessageSquare,
+  BookOpen,
+  Heart,
+  Settings,
+} from "lucide-react";
+import {
+  useAuth,
+  roleLabels,
+  rolePermissions,
+  UserRole,
+} from "@/context/AuthContext";
+import {
+  getAllUsers,
+  updateUserRole,
+  banUser,
+  unbanUser,
+  isUserBanned,
+  getBannedUsers,
+  deleteUser,
+  getUserStats,
+  searchUsers,
+  type BannedUser,
+} from "@/lib/userManagement";
+import {
+  getCommentsByUser,
+  banUserFromCommenting,
+  isUserBannedFromCommenting,
+  getCommentStats,
+} from "@/lib/commentSystem";
+import { getUserProfile } from "@/lib/userData";
+
+export default function UserManagement() {
+  const { user } = useAuth();
+  const [users, setUsers] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isManageUserOpen, setIsManageUserOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = () => {
+    const allUsers = getAllUsers();
+    const usersWithStats = allUsers.map((u) => {
+      const stats = getUserStats(u.id);
+      const profile = getUserProfile(u.id);
+      const banned = isUserBanned(u.id);
+      const commentBanned = isUserBannedFromCommenting(u.id);
+      const userComments = getCommentsByUser(u.id);
+
+      return {
+        ...u,
+        stats: stats?.stats || {},
+        profile: stats?.profile || profile,
+        favoritesCount: stats?.favoritesCount || 0,
+        readingHistoryCount: stats?.readingHistoryCount || 0,
+        commentsCount: userComments.length,
+        activeCommentsCount: userComments.filter((c) => c.status === "active")
+          .length,
+        isBanned: !!banned,
+        banInfo: banned,
+        isCommentBanned: commentBanned,
+        lastActive: profile?.lastActive || u.lastLogin,
+        joinedDaysAgo: Math.floor(
+          (Date.now() - new Date(u.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      };
+    });
+    setUsers(usersWithStats);
+  };
+
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
+    if (!user) return;
+    if (updateUserRole(userId, newRole, user.id)) {
+      loadUserData();
+    }
+  };
+
+  const handleBanUser = (
+    userId: string,
+    reason: string,
+    duration: "temporary" | "permanent",
+    days?: number,
+  ) => {
+    if (!user) return;
+    if (banUser(userId, user.id, reason, duration, days)) {
+      loadUserData();
+    }
+  };
+
+  const handleUnbanUser = (userId: string) => {
+    if (!user) return;
+    if (unbanUser(userId, user.id)) {
+      loadUserData();
+    }
+  };
+
+  const handleDeleteUser = (userToDelete: any) => {
+    if (!user) return;
+    if (deleteUser(userToDelete.id, user.id)) {
+      loadUserData();
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleBanFromCommenting = (
+    userId: string,
+    reason: string,
+    duration: "temporary" | "permanent",
+    days?: number,
+  ) => {
+    if (!user) return;
+    if (banUserFromCommenting(userId, user.id, reason, duration, days)) {
+      loadUserData();
+    }
+  };
+
+  const getFilteredUsers = () => {
+    let filtered = users;
+
+    if (searchQuery) {
+      filtered = searchUsers(searchQuery).map((u) => {
+        const fullUser = users.find((user) => user.id === u.id);
+        return fullUser || u;
+      });
+    }
+
+    if (selectedRole !== "all") {
+      filtered = filtered.filter((u) => u.role === selectedRole);
+    }
+
+    return filtered;
+  };
+
+  const UserDetailModal = ({ user: targetUser }: { user: any }) => {
+    const [banReason, setBanReason] = useState("");
+    const [banDuration, setBanDuration] = useState<"temporary" | "permanent">(
+      "temporary",
+    );
+    const [banDays, setBanDays] = useState(7);
+    const [commentBanReason, setCommentBanReason] = useState("");
+    const [action, setAction] = useState<
+      "view" | "ban" | "role" | "commentBan"
+    >("view");
+
+    return (
+      <Dialog open={isManageUserOpen} onOpenChange={setIsManageUserOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={targetUser?.profile?.avatar} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              إدارة المستخدم: {targetUser?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <Tabs value={action} onValueChange={(value: any) => setAction(value)}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="view">الم��لومات</TabsTrigger>
+              <TabsTrigger value="role">الرتبة</TabsTrigger>
+              <TabsTrigger value="ban">الحظر</TabsTrigger>
+              <TabsTrigger value="commentBan">حظر التعليقات</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="view" className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {targetUser?.commentsCount || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        إجمالي التعليقات
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {targetUser?.stats?.chaptersRead || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        ف��ول مقروءة
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {targetUser?.favoritesCount || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">مفضلة</div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-primary">
+                        {targetUser?.joinedDaysAgo}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        يوم عضوية
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">
+                    البري�� الإلكتروني:
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {targetUser?.email}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">تاريخ الانضمام:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(targetUser?.createdAt || "").toLocaleDateString(
+                      "ar",
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">آخر نشاط:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(targetUser?.lastActive || "").toLocaleDateString(
+                      "ar",
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium">الرتبة الحالية:</span>
+                  <Badge variant="secondary">
+                    {roleLabels[targetUser?.role as UserRole]}
+                  </Badge>
+                </div>
+                {targetUser?.isBanned && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">حالة الحظر:</span>
+                    <Badge variant="destructive">محظور</Badge>
+                  </div>
+                )}
+                {targetUser?.isCommentBanned && (
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">حظر التعليقات:</span>
+                    <Badge variant="destructive">محظور من التعليق</Badge>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="role" className="space-y-4 mt-4">
+              <div>
+                <Label>تغيير الرتبة</Label>
+                <Select
+                  value={targetUser?.role}
+                  onValueChange={(value) =>
+                    handleRoleChange(targetUser?.id, value as UserRole)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(roleLabels).map(([role, label]) => (
+                      <SelectItem key={role} value={role}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium mb-2">صلاحيات الرتبة الحالية:</h4>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {targetUser?.role && rolePermissions[targetUser.role] && (
+                    <>
+                      <div>
+                        •{" "}
+                        {rolePermissions[targetUser.role].canRead
+                          ? "يمكن القراءة"
+                          : "لا يمكن القراءة"}
+                      </div>
+                      <div>
+                        •{" "}
+                        {rolePermissions[targetUser.role].canComment
+                          ? "يمكن التعليق"
+                          : "لا يمكن التعليق"}
+                      </div>
+                      <div>
+                        •{" "}
+                        {rolePermissions[targetUser.role].canUpload
+                          ? "يمكن الرفع"
+                          : "لا يمكن الرفع"}
+                      </div>
+                      <div>
+                        •{" "}
+                        {rolePermissions[targetUser.role].canModerate
+                          ? "يمكن الإشراف"
+                          : "لا يمكن الإشراف"}
+                      </div>
+                      <div>
+                        •{" "}
+                        {rolePermissions[targetUser.role].canAdmin
+                          ? "يمكن الإدارة"
+                          : "لا يمكن الإدارة"}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ban" className="space-y-4 mt-4">
+              {targetUser?.isBanned ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <h4 className="font-medium text-destructive mb-2">
+                      المستخدم محظور
+                    </h4>
+                    <div className="text-sm space-y-1">
+                      <div>السبب: {targetUser.banInfo?.reason}</div>
+                      <div>
+                        النوع:{" "}
+                        {targetUser.banInfo?.duration === "permanent"
+                          ? "دائم"
+                          : "مؤقت"}
+                      </div>
+                      {targetUser.banInfo?.expiresAt && (
+                        <div>
+                          ينتهي:{" "}
+                          {new Date(
+                            targetUser.banInfo.expiresAt,
+                          ).toLocaleDateString("ar")}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleUnbanUser(targetUser.id)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <UserCheck className="h-4 w-4 ml-2" />
+                    رفع الحظر
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label>سبب الحظر</Label>
+                    <Input
+                      placeholder="سبب الحظر"
+                      value={banReason}
+                      onChange={(e) => setBanReason(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>نوع الحظر</Label>
+                    <Select
+                      value={banDuration}
+                      onValueChange={(value: any) => setBanDuration(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="temporary">مؤقت</SelectItem>
+                        <SelectItem value="permanent">دائم</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {banDuration === "temporary" && (
+                    <div>
+                      <Label>عدد الأيام</Label>
+                      <Input
+                        type="number"
+                        placeholder="عدد الأيام"
+                        value={banDays}
+                        onChange={(e) =>
+                          setBanDays(parseInt(e.target.value) || 7)
+                        }
+                      />
+                    </div>
+                  )}
+                  <Button
+                    onClick={() =>
+                      handleBanUser(
+                        targetUser.id,
+                        banReason,
+                        banDuration,
+                        banDays,
+                      )
+                    }
+                    className="w-full"
+                    variant="destructive"
+                    disabled={!banReason.trim()}
+                  >
+                    <Ban className="h-4 w-4 ml-2" />
+                    حظر المستخدم
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="commentBan" className="space-y-4 mt-4">
+              {targetUser?.isCommentBanned ? (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <h4 className="font-medium text-destructive mb-2">
+                    محظور من التعليقات
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    هذا المستخدم لا يمكنه كتابة التعليقات
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label>سبب حظر التعليقات</Label>
+                    <Input
+                      placeholder="سبب منع التعليقات"
+                      value={commentBanReason}
+                      onChange={(e) => setCommentBanReason(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={() =>
+                      handleBanFromCommenting(
+                        targetUser.id,
+                        commentBanReason,
+                        "permanent",
+                      )
+                    }
+                    className="w-full"
+                    variant="destructive"
+                    disabled={!commentBanReason.trim()}
+                  >
+                    <MessageSquare className="h-4 w-4 ml-2" />
+                    حظر من التعليقات
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const filteredUsers = getFilteredUsers();
+  const activeUsers = users.filter((u) => !u.isBanned).length;
+  const bannedUsersCount = users.filter((u) => u.isBanned).length;
+  const moderators = users.filter((u) =>
+    ["admin", "site_admin", "elite_fighter", "tribe_leader"].includes(u.role),
+  ).length;
+
+  return (
+    <div className="space-y-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <Users className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">{users.length}</p>
+                <p className="text-sm text-muted-foreground">
+                  إجمالي المستخدمين
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <UserCheck className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">{activeUsers}</p>
+                <p className="text-sm text-muted-foreground">مستخدمون نشطون</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8 text-orange-500" />
+              <div>
+                <p className="text-2xl font-bold">{moderators}</p>
+                <p className="text-sm text-muted-foreground">مشرفون ومديرون</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <Ban className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-2xl font-bold">{bannedUsersCount}</p>
+                <p className="text-sm text-muted-foreground">محظورون</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search and Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>إدارة المستخدمين</CardTitle>
+          <div className="flex gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="ابحث في المستخدمين..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الرتب</SelectItem>
+                {Object.entries(roleLabels).map(([role, label]) => (
+                  <SelectItem key={role} value={role}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredUsers.map((u) => (
+              <div
+                key={u.id}
+                className={`p-4 border rounded-lg transition-colors ${
+                  u.isBanned ? "bg-red-50 border-red-200" : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={u.profile?.avatar} />
+                      <AvatarFallback>
+                        <User className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{u.name}</h4>
+                        <Badge variant="secondary">{roleLabels[u.role]}</Badge>
+                        {u.isBanned && (
+                          <Badge variant="destructive">محظور</Badge>
+                        )}
+                        {u.isCommentBanned && (
+                          <Badge variant="outline" className="text-red-500">
+                            حظر تعليقات
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{u.email}</p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {u.commentsCount} تعليق
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" />
+                          {u.stats?.chaptersRead || 0} فصل
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" />
+                          {u.favoritesCount} مفضل
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {u.joinedDaysAgo} يوم عضوية
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setIsManageUserOpen(true);
+                      }}
+                    >
+                      <Settings className="h-4 w-4 ml-1" />
+                      إدارة
+                    </Button>
+
+                    <AlertDialog
+                      open={isDeleteDialogOpen && userToDelete?.id === u.id}
+                      onOpenChange={(open) => {
+                        setIsDeleteDialogOpen(open);
+                        if (!open) setUserToDelete(null);
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setUserToDelete(u)}
+                          disabled={u.role === "site_admin"}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>حذف المستخدم</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            هل أنت متأكد من حذف المستخدم {userToDelete?.name}؟
+                            هذا الإجراء لا يمكن التراجع عنه.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(userToDelete)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            حذف
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* User Detail Modal */}
+      {selectedUser && <UserDetailModal user={selectedUser} />}
+    </div>
+  );
+}
