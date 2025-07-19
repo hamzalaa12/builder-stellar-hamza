@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
+import UserManagement from "@/components/admin/UserManagement";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -553,7 +554,7 @@ export default function Admin() {
             <TabsContent value="reports" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>البلاغات الجديدة</CardTitle>
+                  <CardTitle>البلاغات ��لجديدة</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {userReports.length === 0 ? (
