@@ -312,7 +312,7 @@ export default function Admin() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
               <Shield className="h-8 w-8 text-blue-500" />
-              لوحة الإدارة
+              لوحة الإدار��
             </h1>
             <p className="text-muted-foreground">إدارة المستخدمين والمحتوى</p>
           </div>
@@ -398,90 +398,7 @@ export default function Admin() {
             </TabsList>
 
             <TabsContent value="users" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>إدارة المستخدمين</CardTitle>
-                  <div className="flex gap-3">
-                    <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="ابحث في المستخدمين..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pr-10"
-                      />
-                    </div>
-                    <Select
-                      value={selectedRole}
-                      onValueChange={setSelectedRole}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">جميع الرتب</SelectItem>
-                        {Object.entries(roleLabels).map(([role, label]) => (
-                          <SelectItem key={role} value={role}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {filteredUsers.map((u) => (
-                      <div
-                        key={u.id}
-                        className={`p-4 border rounded-lg ${u.isBanned ? "bg-red-50 border-red-200" : ""}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <h4 className="font-medium">{u.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {u.email}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary">
-                                  {roleLabels[u.role]}
-                                </Badge>
-                                {u.isBanned && (
-                                  <Badge variant="destructive">محظور</Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">
-                              انضم:{" "}
-                              {new Date(u.createdAt).toLocaleDateString("ar")}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              فصول مقروءة: {u.stats.chaptersRead || 0}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              مفضلة: {u.favoritesCount}
-                            </p>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setIsManageUserOpen(true);
-                            }}
-                          >
-                            إدارة
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <UserManagement />
             </TabsContent>
 
             <TabsContent value="content" className="mt-6">
@@ -554,7 +471,7 @@ export default function Admin() {
             <TabsContent value="reports" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>البلاغات ��لجديدة</CardTitle>
+                  <CardTitle>البلاغات الجديدة</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {userReports.length === 0 ? (
