@@ -5,6 +5,10 @@ import {
   useEffect,
   ReactNode,
 } from "react";
+import {
+  getUnreadNotificationsCount,
+  initializeUserData,
+} from "@/lib/userData";
 
 export type UserRole =
   | "user"
@@ -93,8 +97,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = getCurrentUser();
     if (currentUser) {
       setUser(currentUser);
+      // Initialize user data and update notifications count
+      initializeUserData(currentUser.id);
+      updateNotificationsCount(currentUser);
     }
   }, []);
+
+  // Update notifications count periodically
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(() => {
+        updateNotificationsCount(user);
+      }, 30000); // Update every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const updateNotificationsCount = (currentUser: User) => {
+    const unreadCount = getUnreadNotificationsCount(currentUser.id);
+    if (unreadCount !== currentUser.notifications) {
+      const updatedUser = { ...currentUser, notifications: unreadCount };
+      setUser(updatedUser);
+      saveCurrentUser(updatedUser);
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -117,6 +144,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updatedUsers.push(adminUser);
       saveUsers(updatedUsers);
 
+      // Initialize user data for admin
+      initializeUserData(adminUser.id);
+      updateNotificationsCount(adminUser);
+
       setUser(adminUser);
       saveCurrentUser(adminUser);
       setIsLoading(false);
@@ -132,6 +163,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         u.id === foundUser.id ? updatedUser : u,
       );
       saveUsers(updatedUsers);
+
+      // Initialize user data
+      initializeUserData(updatedUser.id);
+      updateNotificationsCount(updatedUser);
 
       setUser(updatedUser);
       saveCurrentUser(updatedUser);
@@ -179,6 +214,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Save new user to storage
     const updatedUsers = [...users, newUser];
     saveUsers(updatedUsers);
+
+    // Initialize user data for new user
+    initializeUserData(newUser.id);
 
     setUser(newUser);
     saveCurrentUser(newUser);
