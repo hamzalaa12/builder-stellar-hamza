@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import MangaCard from "@/components/MangaCard";
 import Pagination from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Grid, List } from "lucide-react";
+import { Search, Filter, Grid, List, Star } from "lucide-react";
 
 interface MangaListProps {
   type: "manga" | "manhwa" | "manhua";
